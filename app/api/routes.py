@@ -1,14 +1,19 @@
 # app/api/routes.py
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, Header
 from fastapi.responses import JSONResponse
 import tensorflow as tf
 import os
 from tempfile import NamedTemporaryFile
 import shutil
-from typing import Dict
+from ..config import API_SECRET_KEY
 from ..utils.preprocessing import ImagePreprocessor
 
 router = APIRouter()
+
+
+def verify_secret_key(x_secret_key: str) -> bool:
+    """Verifies if the provided secret key matches the one in .env"""
+    return x_secret_key == API_SECRET_KEY
 
 
 class EmotionDetector:
@@ -51,7 +56,30 @@ except Exception as e:
 
 
 @router.post("/mood-detection")
-async def detect_mood(image: UploadFile = File(...)) -> JSONResponse:
+async def detect_mood(image: UploadFile = File(...),
+                      x_secret_key: str = Header(..., alias="X-Secret-Key")) -> JSONResponse:
+    """
+    Detect mood from image with secret key authentication.
+
+    Args:
+        image: Upload image file
+        x_secret_key: Secret key for authentication (passed in header)
+
+    Returns:
+        JSON response with detected emotion or error message
+    """
+    # Verify secret key first
+    if not verify_secret_key(x_secret_key):
+        return JSONResponse(
+            status_code=401,
+            content={
+                "success": False,
+                "shouldNotify": True,
+                "message": "Invalid secret key",
+                "data": None
+            }
+        )
+
     try:
         # Validate image format
         if not image.content_type in ["image/jpeg", "image/png"]:
