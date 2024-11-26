@@ -81,13 +81,6 @@ async def detect_mood(image: UploadFile = File(...),
         )
 
     try:
-        # Validate image format
-        if not image.content_type in ["image/jpeg", "image/png"]:
-            raise HTTPException(
-                status_code=400,
-                detail="File harus berupa gambar (JPEG atau PNG)"
-            )
-
         # Save uploaded file temporarily
         with NamedTemporaryFile(delete=False) as temp_file:
             shutil.copyfileobj(image.file, temp_file)
