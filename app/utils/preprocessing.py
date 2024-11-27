@@ -23,13 +23,18 @@ class ImagePreprocessor:
         Raises:
             ValueError: If face detection or preprocessing fails
         """
+
         try:
-            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            # Read image in color
+            img = cv2.imread(img_path, cv2.IMREAD_COLOR)
             if img is None:
                 raise ValueError("Gambar tidak ditemukan atau tidak dapat dimuat.")
 
+            # Convert to grayscale after reading in color
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
             faces = self.face_cascade.detectMultiScale(
-                img,
+                gray,
                 scaleFactor=1.1,
                 minNeighbors=5,
                 minSize=(30, 30)
@@ -39,7 +44,7 @@ class ImagePreprocessor:
                 raise ValueError("Wajah tidak terdeteksi dalam gambar.")
 
             x, y, w, h = faces[0]
-            face = img[y:y + h, x:x + w]
+            face = gray[y:y + h, x:x + w]
 
             face_resized = cv2.resize(
                 face,
@@ -48,8 +53,9 @@ class ImagePreprocessor:
             )
             face_normalized = face_resized.astype('float32') / 255.0
 
-            face_final = np.expand_dims(face_normalized, axis=(0, -1))
-
+            # Repeat the grayscale channel 3 times to simulate RGB
+            face_final = np.repeat(face_normalized[..., np.newaxis], 3, axis=-1)
+            face_final = np.expand_dims(face_final, axis=0)
             return face_final
 
         except Exception as e:
