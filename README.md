@@ -17,3 +17,8 @@ playlists. The system leverages CNN for emotion detection
 - Sad 😢
 - Angry 😠
 - Neutral/Calm 😐
+
+## Run Locally
+```bash
+uvicorn app.main:app --reload  
+```
